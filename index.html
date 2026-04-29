@@ -497,7 +497,7 @@ tbody td{padding:11px 14px;vertical-align:middle}
         </label>
         <label class="hunt-toggle" for="nearbyCities" style="margin-bottom:0">
           <input type="checkbox" id="nearbyCities" />
-          <div class="hunt-toggle-text"><div class="hunt-toggle-title">&#127968; Include Nearby Cities</div><div class="hunt-toggle-desc">Also search 5-6 surrounding cities in the same state.</div></div>
+          <div class="hunt-toggle-text"><div class="hunt-toggle-title">&#127968; Include Nearby Towns</div><div class="hunt-toggle-desc">Also searches smaller towns within ~25 miles \u2014 great for catching every lead in a region.</div></div>
         </label>
       </div>
       <div class="state-picker">
@@ -685,22 +685,49 @@ tbody td{padding:11px 14px;vertical-align:middle}
   <!-- BILLING -->
   <div id="page-billing" class="page">
     <div class="page-header">
-      <div><h1>Billing &amp; Subscriptions</h1><p>Track your business subscriptions and total monthly cost</p></div>
-      <button class="btn btn-primary" onclick="openNewSub()">+ Add Subscription</button>
+      <div><h1>Billing</h1><p>Track business expenses and per-client revenue/profit</p></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <div style="display:flex;gap:2px;background:var(--bg);padding:3px;border-radius:8px">
+          <button class="mode-tab active" id="bvSubs" onclick="setBillingView('subs')">Subscriptions</button>
+          <button class="mode-tab" id="bvClients" onclick="setBillingView('clients')">Clients</button>
+        </div>
+        <button class="btn btn-primary" id="bvAddBtn" onclick="openNewSub()">+ Add Subscription</button>
+      </div>
     </div>
     <div class="page-body">
-      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
-        <div class="stat-card hot"><div class="stat-label">Monthly Total</div><div class="stat-value" id="bMonthly">$0</div><div class="stat-sub">All subscriptions normalized</div></div>
-        <div class="stat-card"><div class="stat-label">Yearly Total</div><div class="stat-value" id="bYearly">$0</div><div class="stat-sub">Monthly &times; 12</div></div>
-        <div class="stat-card warn"><div class="stat-label">Active</div><div class="stat-value" id="bActive">0</div><div class="stat-sub">Subscriptions</div></div>
-        <div class="stat-card"><div class="stat-label">Next Renewal</div><div class="stat-value" id="bNextDays" style="font-size:18px">&mdash;</div><div class="stat-sub" id="bNextName"></div></div>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Active Subscriptions</span>
-          <button class="btn btn-ghost btn-sm" onclick="if(confirm('Clear all subscriptions?')){subs=[];persistSubs();renderBilling();toast('Cleared')}">Clear all</button>
+
+      <!-- SUBS VIEW -->
+      <div id="billingSubsView">
+        <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="stat-card hot"><div class="stat-label">Monthly Total</div><div class="stat-value" id="bMonthly">$0</div><div class="stat-sub">All subscriptions normalized</div></div>
+          <div class="stat-card"><div class="stat-label">Yearly Total</div><div class="stat-value" id="bYearly">$0</div><div class="stat-sub">Monthly &times; 12</div></div>
+          <div class="stat-card warn"><div class="stat-label">Active</div><div class="stat-value" id="bActive">0</div><div class="stat-sub">Subscriptions</div></div>
+          <div class="stat-card"><div class="stat-label">Next Renewal</div><div class="stat-value" id="bNextDays" style="font-size:18px">&mdash;</div><div class="stat-sub" id="bNextName"></div></div>
         </div>
-        <div id="billingBody"></div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Active Subscriptions</span>
+            <button class="btn btn-ghost btn-sm" onclick="if(confirm('Clear all subscriptions?')){subs=[];persistSubs();renderBilling();toast('Cleared')}">Clear all</button>
+          </div>
+          <div id="billingBody"></div>
+        </div>
+      </div>
+
+      <!-- CLIENTS VIEW -->
+      <div id="billingClientsView" style="display:none">
+        <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="stat-card hot"><div class="stat-label">Monthly Revenue</div><div class="stat-value" id="cRevenue">$0</div><div class="stat-sub">From all clients</div></div>
+          <div class="stat-card red"><div class="stat-label">Monthly Costs</div><div class="stat-value" id="cCosts">$0</div><div class="stat-sub">Direct client costs</div></div>
+          <div class="stat-card"><div class="stat-label">Net Profit</div><div class="stat-value" id="cProfit">$0</div><div class="stat-sub" id="cMargin">&mdash; margin</div></div>
+          <div class="stat-card warn"><div class="stat-label">Active Clients</div><div class="stat-value" id="cCount">0</div><div class="stat-sub">Currently billing</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Client Accounts</span>
+            <button class="btn btn-ghost btn-sm" onclick="if(confirm('Clear all clients?')){clients=[];persistClients();renderClientsBilling();toast('Cleared')}">Clear all</button>
+          </div>
+          <div id="clientsBody"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -903,6 +930,49 @@ tbody td{padding:11px 14px;vertical-align:middle}
   </div>
 </div>
 
+<!-- CLIENT MODAL -->
+<div class="modal-overlay" id="clientModal">
+  <div class="modal wide">
+    <div class="modal-header"><div><div class="modal-title" id="clTitle">New Client</div><div class="modal-subtitle">Track monthly revenue and the costs you're putting toward this client</div></div><button class="modal-close" onclick="closeClientModal()">&times;</button></div>
+    <div class="modal-body">
+      <div class="settings-grid">
+        <div class="field"><label>Client / Company Name</label><input type="text" id="clName" placeholder="e.g. Mitchell Bakery" /></div>
+        <div class="field"><label>Contact Email</label><input type="email" id="clEmail" placeholder="contact@example.com" /></div>
+        <div class="field"><label>Monthly Revenue ($)</label><input type="number" id="clRevenue" placeholder="500" step="0.01" min="0" /></div>
+        <div class="field"><label>Status</label><select id="clStatus"><option value="active">Active</option><option value="paused">Paused</option><option value="ended">Ended</option></select></div>
+        <div class="field"><label>Started</label><input type="date" id="clStarted" /></div>
+        <div class="field"><label>Billing Cycle</label><select id="clCycle"><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="yearly">Yearly</option><option value="oneTime">One-Time</option></select></div>
+      </div>
+      <div class="field" style="margin-top:14px"><label>Notes</label><textarea id="clNotes" placeholder="Project scope, contact details, anything to remember..."></textarea></div>
+
+      <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div>
+            <div style="font-size:13px;font-weight:700">Costs Toward This Client</div>
+            <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">Domains, hosting, software, contractors, ad spend &mdash; anything you spend specifically for them</div>
+          </div>
+          <button class="btn btn-blue btn-sm" onclick="addClientCostRow()">+ Add Cost</button>
+        </div>
+        <div id="clCostsList"></div>
+        <div style="margin-top:12px;padding:12px 14px;background:#f9fafb;border:1px solid var(--border);border-radius:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700">Monthly Profit Preview</div>
+            <div style="font-size:18px;font-weight:800;margin-top:2px" id="clProfitPreview">$0.00</div>
+          </div>
+          <div id="clMarginPreview" style="font-size:12px;color:var(--text-muted)"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="clDelete" style="display:none" onclick="deleteClient()">Delete</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-secondary btn-sm" onclick="closeClientModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveClient()">Save Client</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- SUBSCRIPTION MODAL -->
 <div class="modal-overlay" id="subModal">
   <div class="modal" style="max-width:520px">
@@ -1032,7 +1102,7 @@ const US_CITIES = {
 
 <script>
 /* ═══ STATE + STORAGE ═══ */
-const LS = { CFG:'lf_cfg', LEADS:'lf_leads', APTS:'lf_apts', TASKS:'lf_tasks', ACTIVITY:'lf_activity', SEARCHED:'lf_searched', TEMPLATES:'lf_templates', EMAILS:'lf_emails', SUBS:'lf_subs' };
+const LS = { CFG:'lf_cfg', LEADS:'lf_leads', APTS:'lf_apts', TASKS:'lf_tasks', ACTIVITY:'lf_activity', SEARCHED:'lf_searched', TEMPLATES:'lf_templates', EMAILS:'lf_emails', SUBS:'lf_subs', CLIENTS:'lf_clients' };
 
 let cfg = {
   ready:false,
@@ -1044,7 +1114,7 @@ let cfg = {
   workDays:[1,2,3,4,5], // Mon-Fri default; 0=Sun..6=Sat
   dailyTarget:500,
 };
-let leads=[], appts=[], tasks=[], activity=[], searchedStates={}, customTemplates={}, emails=[], subs=[];
+let leads=[], appts=[], tasks=[], activity=[], searchedStates={}, customTemplates={}, emails=[], subs=[], clients=[];
 let allResults=[], filtered=[], pageSize=25, curPage=1;
 let emailFilter='all', emailHistoryView='global';
 let pollIntervalId=null;
@@ -1066,6 +1136,7 @@ function persistSearched(){ lsSet(LS.SEARCHED, searchedStates); }
 function persistTemplates(){ lsSet(LS.TEMPLATES, customTemplates); }
 function persistEmails(){ lsSet(LS.EMAILS, emails); }
 function persistSubs(){ lsSet(LS.SUBS, subs); }
+function persistClients(){ lsSet(LS.CLIENTS, clients); }
 function persistCfg()     { lsSet(LS.CFG, cfg); }
 
 function loadAll() {
@@ -1079,6 +1150,7 @@ function loadAll() {
   customTemplates= lsGet(LS.TEMPLATES, {}) || {};
   emails         = lsGet(LS.EMAILS, []) || [];
   subs           = lsGet(LS.SUBS, []) || [];
+  clients        = lsGet(LS.CLIENTS, []) || [];
   leads.forEach(l => {
     if (l.interest === undefined) l.interest = null;
     if (l.contactedAt === undefined) l.contactedAt = 0;
@@ -1490,6 +1562,61 @@ async function callAI(prompt) {
 </script>
 
 <script>
+/* ═══ NEARBY CITY DISCOVERY (geographic) ═══ */
+async function geocodeCity(cityStr) {
+  // Use Places API text search to get coordinates of a city
+  try {
+    const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'X-Goog-Api-Key': cfg.placesKey,
+        'X-Goog-FieldMask':'places.location,places.displayName',
+      },
+      body: JSON.stringify({ textQuery: cityStr, maxResultCount: 1 }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const place = data.places?.[0];
+    if (!place?.location) return null;
+    return { lat: place.location.latitude, lng: place.location.longitude };
+  } catch(e) {
+    console.warn('Geocode failed for', cityStr, e);
+    return null;
+  }
+}
+
+async function findNearbyTowns(centerLat, centerLng, radiusMeters=40000) {
+  // Use Places searchNearby to find populated places (cities/towns/villages) within radius.
+  // Google Places includes "locality" in includedTypes for cities.
+  try {
+    const res = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'X-Goog-Api-Key': cfg.placesKey,
+        'X-Goog-FieldMask':'places.displayName,places.formattedAddress,places.location,places.types',
+      },
+      body: JSON.stringify({
+        includedTypes: ['locality'],
+        maxResultCount: 20,
+        locationRestriction: { circle: { center: { latitude: centerLat, longitude: centerLng }, radius: radiusMeters } },
+      }),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.places || []).map(p => ({
+      name: p.displayName?.text || '',
+      formattedAddress: p.formattedAddress || '',
+      lat: p.location?.latitude,
+      lng: p.location?.longitude,
+    })).filter(c => c.name);
+  } catch(e) {
+    console.warn('Nearby towns lookup failed', e);
+    return [];
+  }
+}
+
 /* ═══ DAILY TARGET ═══ */
 function countTodayContacts() {
   const start = new Date(); start.setHours(0,0,0,0);
@@ -1580,7 +1707,7 @@ function navigate(id) {
   if (id === 'templates')    renderTemplates();
   if (id === 'activity')     renderActivity();
   if (id === 'coverage')     renderCoverage();
-  if (id === 'billing')      renderBilling();
+  if (id === 'billing')      { if (billingView === 'subs') renderBilling(); else renderClientsBilling(); }
   if (id === 'search')       { updateApiStatus(); refreshStateDropdownLabels(); }
 }
 function refreshGoogleBtn() {
@@ -1900,38 +2027,37 @@ async function runSearch() {
     cityList = [loc];
   }
 
-  // Expand with nearby cities if requested
+  // Expand with nearby cities if requested (geographic search)
   if (includeNearby) {
     const expanded = [];
-    cityList.forEach(originalCity => {
-      expanded.push(originalCity);
+    const seenLower = new Set();
+    for (const originalCity of cityList) {
+      if (!seenLower.has(originalCity.toLowerCase())) {
+        expanded.push(originalCity);
+        seenLower.add(originalCity.toLowerCase());
+      }
+      // Geocode the city to get coords
+      const center = await geocodeCity(originalCity);
+      if (!center) {
+        console.warn('Could not geocode', originalCity, '- skipping nearby expansion');
+        continue;
+      }
+      // Find towns within ~25 mi (40km). Adjust radius if needed.
+      const towns = await findNearbyTowns(center.lat, center.lng, 40000);
+      // Detect state of the original city to keep formatting consistent
       const stateAbbr = detectStateFromCity(originalCity);
-      const cityShort = cityNameOnly(originalCity);
-      if (!stateAbbr || !US_CITIES[stateAbbr]) return;
-      const allCitiesInState = US_CITIES[stateAbbr].cities;
-      // Find the index of this city in our list (US_CITIES lists them roughly by population)
-      const idx = allCitiesInState.findIndex(c => c.toLowerCase() === cityShort.toLowerCase());
-      if (idx === -1) {
-        // Not in our list; just add the first 5 cities of the state as approximation
-        allCitiesInState.slice(0, 5).forEach(c => {
-          const candidate = `${c} ${stateAbbr}`;
-          if (!expanded.some(e => e.toLowerCase() === candidate.toLowerCase())) expanded.push(candidate);
-        });
-        return;
-      }
-      // Add up to 5 cities from neighboring positions in the state's list
-      // (cities in US_CITIES are ordered by population so neighbors are similar-sized cities)
-      const neighbors = [];
-      // Take 3 before and 3 after, skip ourselves
-      for (let offset = 1; offset <= 6 && neighbors.length < 5; offset++) {
-        if (idx - offset >= 0) neighbors.push(allCitiesInState[idx - offset]);
-        if (neighbors.length < 5 && idx + offset < allCitiesInState.length) neighbors.push(allCitiesInState[idx + offset]);
-      }
-      neighbors.forEach(c => {
-        const candidate = `${c} ${stateAbbr}`;
-        if (!expanded.some(e => e.toLowerCase() === candidate.toLowerCase())) expanded.push(candidate);
+      towns.forEach(t => {
+        // Build the search string: "Town State"
+        let candidate = stateAbbr ? `${t.name} ${stateAbbr}` : t.name;
+        // If the formatted address contains a state code, use that instead (more accurate)
+        const stateMatch = (t.formattedAddress || '').match(/,\s*([A-Z]{2})\s+\d/);
+        if (stateMatch) candidate = `${t.name} ${stateMatch[1]}`;
+        if (!seenLower.has(candidate.toLowerCase())) {
+          expanded.push(candidate);
+          seenLower.add(candidate.toLowerCase());
+        }
       });
-    });
+    }
     if (expanded.length > cityList.length) {
       toast(`Expanded to ${expanded.length} cities (added ${expanded.length - cityList.length} nearby)`, 3000, 'ok');
     }
@@ -2919,6 +3045,28 @@ async function pollForRepliesManual() {
 
 /* ═══ BILLING / SUBSCRIPTIONS ═══ */
 let editingSubId = null;
+let editingClientId = null;
+let billingView = 'subs';
+let clientCostRows = []; // working copy when editing a client
+
+function setBillingView(view) {
+  billingView = view;
+  document.getElementById('bvSubs').classList.toggle('active', view === 'subs');
+  document.getElementById('bvClients').classList.toggle('active', view === 'clients');
+  document.getElementById('billingSubsView').style.display = view === 'subs' ? 'block' : 'none';
+  document.getElementById('billingClientsView').style.display = view === 'clients' ? 'block' : 'none';
+  const addBtn = document.getElementById('bvAddBtn');
+  if (view === 'subs') {
+    addBtn.textContent = '+ Add Subscription';
+    addBtn.onclick = openNewSub;
+    renderBilling();
+  } else {
+    addBtn.textContent = '+ Add Client';
+    addBtn.onclick = openNewClient;
+    renderClientsBilling();
+  }
+}
+
 function normalizeMonthly(amount, cycle) {
   switch (cycle) {
     case 'weekly':    return amount * 4.345;  // weeks per month avg
@@ -3039,6 +3187,180 @@ function renderBilling() {
   });
   html += '</tbody></table></div>';
   document.getElementById('billingBody').innerHTML = html;
+}
+
+/* ─── CLIENTS ─── */
+function openNewClient() {
+  editingClientId = null;
+  clientCostRows = [];
+  document.getElementById('clTitle').textContent = 'New Client';
+  document.getElementById('clName').value = '';
+  document.getElementById('clEmail').value = '';
+  document.getElementById('clRevenue').value = '';
+  document.getElementById('clStatus').value = 'active';
+  document.getElementById('clStarted').value = todayISO();
+  document.getElementById('clCycle').value = 'monthly';
+  document.getElementById('clNotes').value = '';
+  document.getElementById('clDelete').style.display = 'none';
+  renderClientCosts();
+  document.getElementById('clientModal').classList.add('open');
+}
+function editClient(id) {
+  const c = clients.find(x => x.id === id); if (!c) return;
+  editingClientId = id;
+  clientCostRows = (c.costs || []).map(co => ({ ...co }));
+  document.getElementById('clTitle').textContent = 'Edit Client';
+  document.getElementById('clName').value = c.name || '';
+  document.getElementById('clEmail').value = c.email || '';
+  document.getElementById('clRevenue').value = c.revenue ?? '';
+  document.getElementById('clStatus').value = c.status || 'active';
+  document.getElementById('clStarted').value = c.started || '';
+  document.getElementById('clCycle').value = c.cycle || 'monthly';
+  document.getElementById('clNotes').value = c.notes || '';
+  document.getElementById('clDelete').style.display = 'inline-flex';
+  renderClientCosts();
+  document.getElementById('clientModal').classList.add('open');
+}
+function closeClientModal() { document.getElementById('clientModal').classList.remove('open'); editingClientId = null; clientCostRows = []; }
+function addClientCostRow() {
+  clientCostRows.push({ id:uid(), name:'', amount:0, cycle:'monthly' });
+  renderClientCosts();
+}
+function removeClientCostRow(rowId) {
+  clientCostRows = clientCostRows.filter(r => r.id !== rowId);
+  renderClientCosts();
+}
+function updateClientCostRow(rowId, field, value) {
+  const r = clientCostRows.find(x => x.id === rowId); if (!r) return;
+  if (field === 'amount') r.amount = parseFloat(value) || 0;
+  else r[field] = value;
+  updateClientProfitPreview();
+}
+function renderClientCosts() {
+  const wrap = document.getElementById('clCostsList');
+  if (!clientCostRows.length) {
+    wrap.innerHTML = `<div style="font-size:12px;color:var(--text-muted);font-style:italic;padding:8px 0">No costs added yet \u2014 click "+ Add Cost" to track domains, hosting, ad spend, contractors, etc.</div>`;
+    updateClientProfitPreview();
+    return;
+  }
+  wrap.innerHTML = clientCostRows.map(r => `
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <input type="text" placeholder="e.g. Domain renewal, Figma seat" value="${esc(r.name)}" oninput="updateClientCostRow('${r.id}','name',this.value)" style="font-size:13px" />
+      <input type="number" placeholder="0.00" value="${r.amount || ''}" step="0.01" min="0" oninput="updateClientCostRow('${r.id}','amount',this.value)" style="font-size:13px" />
+      <select onchange="updateClientCostRow('${r.id}','cycle',this.value)" style="font-size:13px">
+        <option value="monthly" ${r.cycle==='monthly'?'selected':''}>Monthly</option>
+        <option value="yearly" ${r.cycle==='yearly'?'selected':''}>Yearly</option>
+        <option value="quarterly" ${r.cycle==='quarterly'?'selected':''}>Quarterly</option>
+        <option value="oneTime" ${r.cycle==='oneTime'?'selected':''}>One-Time</option>
+      </select>
+      <button class="btn btn-ghost btn-xs" onclick="removeClientCostRow('${r.id}')" title="Remove">\u00d7</button>
+    </div>
+  `).join('');
+  updateClientProfitPreview();
+}
+function clientMonthlyCosts(cs) {
+  return (cs || []).reduce((sum, c) => {
+    if (c.cycle === 'oneTime') return sum; // not recurring
+    return sum + normalizeMonthly(c.amount || 0, c.cycle);
+  }, 0);
+}
+function clientMonthlyRevenue(c) {
+  return normalizeMonthly(c.revenue || 0, c.cycle === 'oneTime' ? 'monthly' : c.cycle);
+}
+function updateClientProfitPreview() {
+  const revenue = parseFloat(document.getElementById('clRevenue').value) || 0;
+  const cycle = document.getElementById('clCycle').value;
+  const monthlyRev = cycle === 'oneTime' ? 0 : normalizeMonthly(revenue, cycle);
+  const monthlyCost = clientMonthlyCosts(clientCostRows);
+  const profit = monthlyRev - monthlyCost;
+  const margin = monthlyRev > 0 ? Math.round((profit / monthlyRev) * 100) : 0;
+  const pp = document.getElementById('clProfitPreview');
+  const mp = document.getElementById('clMarginPreview');
+  if (pp) {
+    pp.textContent = (profit >= 0 ? '$' : '\u2212$') + Math.abs(profit).toFixed(2);
+    pp.style.color = profit >= 0 ? 'var(--primary)' : 'var(--red)';
+  }
+  if (mp) {
+    if (cycle === 'oneTime') mp.textContent = 'One-time projects don\u2019t roll into monthly profit';
+    else mp.textContent = monthlyRev > 0 ? `${margin}% margin \u2022 $${monthlyRev.toFixed(2)} rev \u2212 $${monthlyCost.toFixed(2)} costs` : 'Add revenue to calculate margin';
+  }
+}
+function saveClient() {
+  const name = document.getElementById('clName').value.trim();
+  if (!name) return toast('Client name required', 2500, 'err');
+  const data = {
+    name,
+    email: document.getElementById('clEmail').value.trim(),
+    revenue: parseFloat(document.getElementById('clRevenue').value) || 0,
+    status: document.getElementById('clStatus').value,
+    started: document.getElementById('clStarted').value || null,
+    cycle: document.getElementById('clCycle').value,
+    notes: document.getElementById('clNotes').value.trim(),
+    costs: clientCostRows.filter(r => r.name.trim() || r.amount > 0),
+  };
+  if (editingClientId) {
+    const idx = clients.findIndex(c => c.id === editingClientId);
+    if (idx >= 0) Object.assign(clients[idx], data);
+    toast('Client updated', 2200, 'ok');
+  } else {
+    clients.unshift({ id:uid(), ...data, createdAt:Date.now() });
+    toast('Client added', 2200, 'ok');
+  }
+  persistClients();
+  closeClientModal();
+  renderClientsBilling();
+}
+function deleteClient() {
+  if (!editingClientId || !confirm('Delete this client?')) return;
+  clients = clients.filter(c => c.id !== editingClientId);
+  persistClients();
+  closeClientModal();
+  renderClientsBilling();
+  toast('Deleted');
+}
+function renderClientsBilling() {
+  const active = clients.filter(c => c.status === 'active');
+  let totalRev = 0, totalCost = 0;
+  active.forEach(c => {
+    if (c.cycle !== 'oneTime') totalRev += normalizeMonthly(c.revenue || 0, c.cycle);
+    totalCost += clientMonthlyCosts(c.costs);
+  });
+  const profit = totalRev - totalCost;
+  const margin = totalRev > 0 ? Math.round((profit / totalRev) * 100) : 0;
+  document.getElementById('cRevenue').textContent = '$' + totalRev.toFixed(2);
+  document.getElementById('cCosts').textContent = '$' + totalCost.toFixed(2);
+  const pf = document.getElementById('cProfit');
+  pf.textContent = (profit >= 0 ? '$' : '\u2212$') + Math.abs(profit).toFixed(2);
+  pf.style.color = profit >= 0 ? 'var(--primary)' : 'var(--red)';
+  document.getElementById('cMargin').textContent = totalRev > 0 ? `${margin}% margin` : '\u2014 margin';
+  document.getElementById('cCount').textContent = active.length;
+
+  if (!clients.length) {
+    document.getElementById('clientsBody').innerHTML = `<div class="empty"><div class="empty-icon">\ud83d\udcbc</div><h3>No clients yet</h3><p>Add your first client to track revenue, costs, and profit margins.</p></div>`;
+    return;
+  }
+  let html = '<div class="table-wrap"><table><thead><tr><th>Client</th><th>Revenue</th><th>Costs</th><th>Profit</th><th>Margin</th><th>Status</th><th>Costs Detail</th><th></th></tr></thead><tbody>';
+  clients.forEach(c => {
+    const monthlyRev = c.cycle === 'oneTime' ? 0 : normalizeMonthly(c.revenue || 0, c.cycle);
+    const monthlyCost = clientMonthlyCosts(c.costs);
+    const cProfit = monthlyRev - monthlyCost;
+    const cMargin = monthlyRev > 0 ? Math.round((cProfit / monthlyRev) * 100) : 0;
+    const profitColor = cProfit >= 0 ? 'var(--primary)' : 'var(--red)';
+    const statusBadge = c.status === 'active' ? '<span class="badge badge-open">Active</span>' : c.status === 'paused' ? '<span class="badge badge-warm">Paused</span>' : '<span class="badge badge-cold">Ended</span>';
+    const costsList = (c.costs || []).filter(co => co.name).map(co => `${esc(co.name)} ($${(co.amount||0).toFixed(2)}/${co.cycle})`).join(', ') || '\u2014';
+    html += `<tr onclick="if(event.target.tagName!=='BUTTON')editClient('${c.id}')">
+      <td><div class="lead-name">${esc(c.name)}</div>${c.email?`<div class="lead-addr">${esc(c.email)}</div>`:''}</td>
+      <td><strong>$${monthlyRev.toFixed(2)}</strong><div style="font-size:10.5px;color:var(--text-muted);text-transform:capitalize">${esc(c.cycle)}</div></td>
+      <td><span style="color:var(--red)">$${monthlyCost.toFixed(2)}</span></td>
+      <td><strong style="color:${profitColor}">${cProfit >= 0 ? '$' : '\u2212$'}${Math.abs(cProfit).toFixed(2)}</strong></td>
+      <td><span style="font-weight:600;color:${cProfit >= 0 ? 'var(--primary)' : 'var(--red)'}">${monthlyRev > 0 ? cMargin + '%' : '\u2014'}</span></td>
+      <td>${statusBadge}</td>
+      <td style="max-width:240px"><div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${costsList}</div></td>
+      <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();editClient('${c.id}')">Edit</button></td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  document.getElementById('clientsBody').innerHTML = html;
 }
 
 /* ═══ EMAIL TEMPLATES PAGE ═══ */
