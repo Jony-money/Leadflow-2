@@ -775,6 +775,59 @@ tbody td{padding:11px 14px;vertical-align:middle}
         </div>
       </div>
       <div class="card" style="max-width:760px;margin-top:16px">
+        <div class="card-header"><span class="card-title">📨 Hostinger Email (Secondary Account)</span><span id="hostingerStatusPill" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:#f3f4f6;color:#6b7280">Not configured</span></div>
+        <div class="card-body">
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:12.5px;color:#78350f;line-height:1.6">
+            <strong>How it works:</strong> Browsers can't talk to SMTP directly, so we send through <a href="https://www.emailjs.com" target="_blank" style="color:#92400e;font-weight:700">EmailJS</a> (free: 200 emails/mo) which relays to your Hostinger SMTP. Your real "From" address is your Hostinger email.
+            <details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700">📋 Setup steps (click to expand)</summary>
+              <ol style="margin:8px 0 0 20px;padding:0;line-height:1.8">
+                <li>Sign up free at <a href="https://www.emailjs.com" target="_blank" style="color:#92400e;font-weight:700">emailjs.com</a></li>
+                <li><strong>Email Services → Add New Service → Other SMTP</strong>. Use Hostinger's settings:<br>
+                  Host: <code style="background:#fff;padding:1px 5px;border-radius:3px">smtp.hostinger.com</code> &nbsp;
+                  Port: <code style="background:#fff;padding:1px 5px;border-radius:3px">465</code> &nbsp;
+                  Encryption: <code style="background:#fff;padding:1px 5px;border-radius:3px">SSL</code><br>
+                  Username + Password: your Hostinger email + its password
+                </li>
+                <li><strong>Email Templates → Create New Template.</strong> In the template, set:<br>
+                  To Email: <code style="background:#fff;padding:1px 5px;border-radius:3px">{{to_email}}</code> &nbsp;
+                  From Name: <code style="background:#fff;padding:1px 5px;border-radius:3px">{{from_name}}</code> &nbsp;
+                  Reply To: <code style="background:#fff;padding:1px 5px;border-radius:3px">{{reply_to}}</code><br>
+                  Subject: <code style="background:#fff;padding:1px 5px;border-radius:3px">{{subject}}</code> &nbsp;
+                  Content (text or HTML): <code style="background:#fff;padding:1px 5px;border-radius:3px">{{message}}</code>
+                </li>
+                <li>Copy the <strong>Service ID</strong>, <strong>Template ID</strong>, and your <strong>Public Key</strong> (Account → API Keys) into the fields below.</li>
+                <li>Test from "Send Test Email" below before relying on it for real outreach.</li>
+              </ol>
+              <div style="margin-top:8px"><strong>⚠ Limitation:</strong> Reply tracking won't auto-poll Hostinger inboxes — only Gmail does that. Replies will arrive in Hostinger webmail/Outlook normally; you'll just need to mark them in the app manually.</div>
+            </details>
+          </div>
+          <div class="settings-grid">
+            <div class="field"><label>From Email <span style="color:#dc2626">*</span></label><input type="email" id="sHostFrom" placeholder="you@yourdomain.com" autocomplete="off" /><p style="font-size:11.5px;color:var(--text-muted);margin-top:4px">Must match the SMTP user in EmailJS</p></div>
+            <div class="field"><label>From Name</label><input type="text" id="sHostName" placeholder="Your Name or Business" autocomplete="off" /></div>
+            <div class="field" style="grid-column:1/-1"><label>Reply-To (optional)</label><input type="email" id="sHostReplyTo" placeholder="Defaults to From Email" autocomplete="off" /></div>
+            <div class="field"><label>EmailJS Service ID <span style="color:#dc2626">*</span></label><input type="text" id="sEmailjsService" placeholder="service_xxxxxxx" autocomplete="off" /></div>
+            <div class="field"><label>EmailJS Template ID <span style="color:#dc2626">*</span></label><input type="text" id="sEmailjsTemplate" placeholder="template_xxxxxxx" autocomplete="off" /></div>
+            <div class="field" style="grid-column:1/-1"><label>EmailJS Public Key <span style="color:#dc2626">*</span></label><input type="password" id="sEmailjsKey" placeholder="public key from Account → API Keys" autocomplete="off" /></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:14px;padding:10px 14px;background:var(--accent-dim);border:1px solid #bfdbfe;border-radius:8px">
+            <input type="checkbox" id="sHostEnabled" />
+            <label for="sHostEnabled" style="font-size:12.5px;color:#1d4ed8;cursor:pointer;flex:1"><strong>Enable Hostinger email sending</strong><div style="font-size:11px;color:var(--text-muted);margin-top:2px">When enabled, you can pick "Send via Hostinger" in the email composer.</div></label>
+          </div>
+          <div class="field" style="margin-top:14px"><label>Default "From" Account</label>
+            <select id="sDefaultFrom" style="width:100%">
+              <option value="gmail">Gmail (when connected)</option>
+              <option value="hostinger">Hostinger (when enabled)</option>
+              <option value="mailto">Open in Mail App</option>
+            </select>
+            <p style="font-size:11.5px;color:var(--text-muted);margin-top:4px">Which account is pre-selected when you open the email composer.</p>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-blue btn-sm" onclick="testHostingerEmail()">📨 Send Test Email</button>
+            <span id="hostingerTestStatus" style="font-size:12px;color:var(--text-muted);align-self:center"></span>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="max-width:760px;margin-top:16px">
         <div class="card-header"><span class="card-title">Working Hours &amp; Scheduling</span></div>
         <div class="card-body">
           <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:14px;line-height:1.55">Sets your default availability window. Used to suggest open meeting slots and to flag conflicts. You can override per-meeting if needed.</p>
@@ -856,7 +909,7 @@ tbody td{padding:11px 14px;vertical-align:middle}
   <div class="modal wide">
     <div class="modal-header"><div><div class="modal-title">Compose Email</div><div class="modal-subtitle" id="emailSub">Pick a template, edit, then send</div></div><button class="modal-close" onclick="closeEmailModal()">&times;</button></div>
     <div class="modal-body">
-      <div class="em-channel"><button class="em-channel-btn on" id="chMailto" onclick="setEmailChannel('mailto')">&#128231; Open in Mail App</button><button class="em-channel-btn" id="chGmail" onclick="setEmailChannel('gmail')">&#9889; Send via Gmail</button></div>
+      <div class="em-channel"><button class="em-channel-btn on" id="chMailto" onclick="setEmailChannel('mailto')">&#128231; Mail App</button><button class="em-channel-btn" id="chGmail" onclick="setEmailChannel('gmail')">&#9889; Gmail</button><button class="em-channel-btn" id="chHostinger" onclick="setEmailChannel('hostinger')">📨 Hostinger</button></div>
       <div class="em-channel-info" id="emChInfo">Opens your default email app with the message pre-filled.</div>
       <div class="em-field"><label>Template</label><select id="emTemplate" onchange="loadEmailTemplate()" style="width:100%"><option value="cold">Cold Outreach</option><option value="confirmation">Booking Confirmation</option><option value="reminder7">7-Day Reminder</option><option value="reminder24">24-Hour Reminder</option><option value="reminder1h">1-Hour Reminder</option><option value="reschedule">Reschedule</option><option value="followupWon">Follow-Up \u2014 Closed Deal</option><option value="followupOpen">Follow-Up \u2014 Still Deciding</option><option value="proposal">Proposal Send</option><option value="custom">Blank / Custom</option></select></div>
       <div class="em-field"><label>To</label><div class="em-to" id="emTo"></div></div>
@@ -1133,7 +1186,17 @@ let cfg = {
   workStart:'08:00', workEnd:'20:00',
   meetingDuration:30, bufferMin:15,
   workDays:[1,2,3,4,5], // Mon-Fri default; 0=Sun..6=Sat
-  dailyTarget:500,
+  dailyTarget:1500,
+  dailyApptTarget:5,
+  // Hostinger / EmailJS (secondary email)
+  hostingerEnabled:false,
+  hostingerFromEmail:'',
+  hostingerFromName:'',
+  hostingerReplyTo:'',
+  emailjsServiceId:'',
+  emailjsTemplateId:'',
+  emailjsPublicKey:'',
+  defaultEmailFrom:'gmail', // 'gmail' | 'hostinger' | 'mailto'
 };
 let leads=[], appts=[], tasks=[], activity=[], searchedStates={}, customTemplates={}, emails=[], subs=[], clients=[];
 let allResults=[], filtered=[], pageSize=25, curPage=1;
@@ -1782,6 +1845,19 @@ function loadSettingsUI() {
   document.querySelectorAll('#sWorkDays input[data-day]').forEach(cb => {
     cb.checked = wd.includes(parseInt(cb.dataset.day));
   });
+  // Hostinger / EmailJS
+  const $ = id => document.getElementById(id);
+  if ($('sHostFrom')) {
+    $('sHostFrom').value          = cfg.hostingerFromEmail || '';
+    $('sHostName').value          = cfg.hostingerFromName || cfg.user.name || '';
+    $('sHostReplyTo').value       = cfg.hostingerReplyTo || '';
+    $('sEmailjsService').value    = cfg.emailjsServiceId || '';
+    $('sEmailjsTemplate').value   = cfg.emailjsTemplateId || '';
+    $('sEmailjsKey').value        = cfg.emailjsPublicKey || '';
+    $('sHostEnabled').checked     = !!cfg.hostingerEnabled;
+    $('sDefaultFrom').value       = cfg.defaultEmailFrom || 'gmail';
+    updateHostingerStatusPill();
+  }
 }
 function saveSettings() {
   cfg.user.name     = document.getElementById('sName').value.trim();
@@ -1802,9 +1878,121 @@ function saveSettings() {
   if (isNaN(cfg.bufferMin)) cfg.bufferMin = 15;
   cfg.workDays      = Array.from(document.querySelectorAll('#sWorkDays input[data-day]:checked')).map(cb => parseInt(cb.dataset.day));
   if (!cfg.workDays.length) cfg.workDays = [1,2,3,4,5]; // safety
+  // Hostinger / EmailJS
+  const $ = id => document.getElementById(id);
+  if ($('sHostFrom')) {
+    cfg.hostingerFromEmail = $('sHostFrom').value.trim();
+    cfg.hostingerFromName  = $('sHostName').value.trim();
+    cfg.hostingerReplyTo   = $('sHostReplyTo').value.trim();
+    cfg.emailjsServiceId   = $('sEmailjsService').value.trim();
+    cfg.emailjsTemplateId  = $('sEmailjsTemplate').value.trim();
+    cfg.emailjsPublicKey   = $('sEmailjsKey').value.trim();
+    cfg.hostingerEnabled   = $('sHostEnabled').checked && isHostingerConfigured();
+    cfg.defaultEmailFrom   = $('sDefaultFrom').value || 'gmail';
+    updateHostingerStatusPill();
+    if ($('sHostEnabled').checked && !isHostingerConfigured()) {
+      toast('Fill in From Email + EmailJS Service/Template/Key to enable Hostinger', 3500, 'err');
+    }
+  }
   persistCfg(); updateApiStatus();
   if (clientChanged && cfg.gClientId) initGoogleAuth();
   toast('Settings saved', 2200, 'ok');
+}
+function isHostingerConfigured() {
+  return !!(cfg.hostingerFromEmail && cfg.emailjsServiceId && cfg.emailjsTemplateId && cfg.emailjsPublicKey);
+}
+function updateHostingerStatusPill() {
+  const pill = document.getElementById('hostingerStatusPill');
+  if (!pill) return;
+  if (cfg.hostingerEnabled && isHostingerConfigured()) {
+    pill.textContent = '✓ Connected';
+    pill.style.background = '#d1fae5';
+    pill.style.color = '#065f46';
+  } else if (isHostingerConfigured()) {
+    pill.textContent = 'Configured (off)';
+    pill.style.background = '#fef3c7';
+    pill.style.color = '#92400e';
+  } else {
+    pill.textContent = 'Not configured';
+    pill.style.background = '#f3f4f6';
+    pill.style.color = '#6b7280';
+  }
+}
+async function sendViaHostinger(to, subject, body, opts={}) {
+  if (!isHostingerConfigured()) throw new Error('Hostinger not configured — fill in EmailJS fields in Settings');
+  if (!cfg.hostingerEnabled) throw new Error('Hostinger is configured but disabled — turn it on in Settings');
+  const replyTo = opts.replyTo || cfg.hostingerReplyTo || cfg.hostingerFromEmail;
+  const fromName = opts.fromName || cfg.hostingerFromName || cfg.user.name || cfg.hostingerFromEmail;
+  const r = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({
+      service_id: cfg.emailjsServiceId,
+      template_id: cfg.emailjsTemplateId,
+      user_id: cfg.emailjsPublicKey,
+      template_params: {
+        to_email: to,
+        subject: subject,
+        message: body,
+        from_name: fromName,
+        reply_to: replyTo,
+      }
+    })
+  });
+  if (!r.ok) {
+    const txt = await r.text().catch(()=>'');
+    throw new Error(txt || `EmailJS error ${r.status}`);
+  }
+  return { ok:true };
+}
+async function testHostingerEmail() {
+  // Save current settings first so test uses fresh values
+  const $ = id => document.getElementById(id);
+  const tempCfg = {
+    hostingerFromEmail: $('sHostFrom').value.trim(),
+    hostingerFromName : $('sHostName').value.trim(),
+    hostingerReplyTo  : $('sHostReplyTo').value.trim(),
+    emailjsServiceId  : $('sEmailjsService').value.trim(),
+    emailjsTemplateId : $('sEmailjsTemplate').value.trim(),
+    emailjsPublicKey  : $('sEmailjsKey').value.trim(),
+  };
+  if (!tempCfg.hostingerFromEmail || !tempCfg.emailjsServiceId || !tempCfg.emailjsTemplateId || !tempCfg.emailjsPublicKey) {
+    toast('Fill in all required Hostinger fields first', 3000, 'err');
+    return;
+  }
+  const to = tempCfg.hostingerFromEmail; // send to self
+  const status = document.getElementById('hostingerTestStatus');
+  status.textContent = 'Sending test…';
+  status.style.color = 'var(--text-muted)';
+  try {
+    const r = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        service_id: tempCfg.emailjsServiceId,
+        template_id: tempCfg.emailjsTemplateId,
+        user_id: tempCfg.emailjsPublicKey,
+        template_params: {
+          to_email: to,
+          subject: 'LeadFlow — Hostinger test email ✓',
+          message: 'Success! Your Hostinger SMTP is wired up through EmailJS. You can now send outreach from this address inside LeadFlow.',
+          from_name: tempCfg.hostingerFromName || 'LeadFlow',
+          reply_to: tempCfg.hostingerReplyTo || tempCfg.hostingerFromEmail,
+        }
+      })
+    });
+    if (!r.ok) {
+      const txt = await r.text().catch(()=>'');
+      throw new Error(txt || `Status ${r.status}`);
+    }
+    status.textContent = `✓ Sent to ${to} — check inbox`;
+    status.style.color = '#059669';
+    toast('Test email sent ✓', 2500, 'ok');
+  } catch(e) {
+    status.textContent = '✗ ' + (e.message || 'Send failed');
+    status.style.color = '#dc2626';
+    toast('Test failed: ' + e.message, 4500, 'err');
+  }
 }
 function updateApiStatus() {
   const ok = !!cfg.placesKey;
@@ -2485,7 +2673,7 @@ function renderLeadTimeline(lead) {
     items.push({
       ts: e.sentAt, type:'email_sent',
       text: `Email sent: "${e.subject}"`,
-      detail: `${templateLabel(e.template)} · ${e.channel === 'gmail' ? 'Gmail' : 'Mail App'}`,
+      detail: `${templateLabel(e.template)} · ${e.channel === 'gmail' ? 'Gmail' : e.channel === 'hostinger' ? 'Hostinger' : 'Mail App'}`,
       icon:'✉', bg:'#dbeafe', emailId: e.id,
     });
     if (e.repliedAt) items.push({
@@ -2572,13 +2760,24 @@ function deleteLead() {
   leads = leads.filter(l => l.id !== activeLead.id);
   persist(); closeModal(); toast('Lead removed');
 }
+function pickDefaultEmailChannel() {
+  const pref = cfg.defaultEmailFrom || 'gmail';
+  if (pref === 'hostinger' && cfg.hostingerEnabled && isHostingerConfigured()) return 'hostinger';
+  if (pref === 'gmail' && gToken) return 'gmail';
+  if (pref === 'mailto') return 'mailto';
+  // Fallback chain
+  if (gToken) return 'gmail';
+  if (cfg.hostingerEnabled && isHostingerConfigured()) return 'hostinger';
+  return 'mailto';
+}
 function openEmailFromLead() {
   if (!activeLead) return;
   if (activeLead._preview) { toast('Save lead first'); return; }
-  emailContext = { lead: activeLead, channel:'mailto', template:'cold' };
+  emailContext = { lead: activeLead, channel:pickDefaultEmailChannel(), template:'cold' };
   document.getElementById('emTemplate').value = 'cold';
   document.getElementById('leadModal').classList.remove('open');
   loadEmailTemplate();
+  setEmailChannel(emailContext.channel);
   document.getElementById('emailModal').classList.add('open');
 }
 function openBookFromLead() {
@@ -2809,13 +3008,27 @@ function buildEmail(type, data) {
 /* ═══ EMAIL COMPOSER ═══ */
 function setEmailChannel(ch) {
   if (!emailContext) return;
+  if (ch === 'hostinger' && (!cfg.hostingerEnabled || !isHostingerConfigured())) {
+    toast('Configure & enable Hostinger in Settings first', 3000, 'err');
+    return;
+  }
   emailContext.channel = ch;
   document.getElementById('chMailto').classList.toggle('on', ch === 'mailto');
   document.getElementById('chGmail').classList.toggle('on', ch === 'gmail');
-  document.getElementById('emChInfo').textContent = ch === 'mailto'
-    ? 'Opens your default email app (Outlook, Apple Mail, Gmail web, etc.) with the message pre-filled. You hit Send.'
-    : (gToken ? '✓ Sends directly through Gmail using your connected account.' : '⚠ Google not connected — click the Google pill in the sidebar to connect.');
-  document.getElementById('emSendBtn').textContent = ch === 'mailto' ? 'Open in Mail App →' : 'Send via Gmail →';
+  const chHost = document.getElementById('chHostinger');
+  if (chHost) chHost.classList.toggle('on', ch === 'hostinger');
+  const info = document.getElementById('emChInfo');
+  const btn  = document.getElementById('emSendBtn');
+  if (ch === 'mailto') {
+    info.textContent = 'Opens your default email app (Outlook, Apple Mail, Gmail web, etc.) with the message pre-filled. You hit Send.';
+    btn.textContent = 'Open in Mail App →';
+  } else if (ch === 'gmail') {
+    info.textContent = gToken ? '✓ Sends directly through Gmail using your connected account.' : '⚠ Google not connected — click the Google pill in the sidebar to connect.';
+    btn.textContent = 'Send via Gmail →';
+  } else if (ch === 'hostinger') {
+    info.textContent = `✓ Sends through Hostinger SMTP (via EmailJS) from ${cfg.hostingerFromEmail}. Replies arrive in Hostinger webmail.`;
+    btn.textContent = 'Send via Hostinger →';
+  }
 }
 function loadEmailTemplate() {
   if (!emailContext) return;
@@ -2839,6 +3052,42 @@ async function sendEmailFromModal() {
   const body = document.getElementById('emBody').value;
   if (!to) return toast('No recipient email', 2500, 'err');
   if (!subj) return toast('Add a subject', 2500, 'err');
+
+  if (emailContext.channel === 'hostinger') {
+    if (!cfg.hostingerEnabled || !isHostingerConfigured()) {
+      toast('Configure Hostinger in Settings first', 3000, 'err');
+      return;
+    }
+    const btn = document.getElementById('emSendBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Sending…';
+    try {
+      await sendViaHostinger(to, subj, body);
+      logEmail({
+        to, subject:subj, body,
+        template: emailContext.template,
+        channel: 'hostinger',
+        leadId: emailContext.lead?.id || null,
+        apptId: emailContext.appt?.id || null,
+      });
+      logActivity('email', `Email sent via Hostinger to ${to}`, subj);
+      if (emailContext.lead?.id) {
+        const idx = leads.findIndex(l => l.id === emailContext.lead.id);
+        if (idx >= 0 && !leads[idx].contactedAt) {
+          leads[idx].contactedAt = Date.now();
+          if (leads[idx].pStatus === 'new') leads[idx].pStatus = 'contacted';
+          persist();
+        }
+      }
+      toast('Email sent via Hostinger ✓', 2500, 'ok');
+      closeEmailModal();
+      updateBadges(); updateDash();
+    } catch(e) {
+      toast('Send failed: ' + e.message, 4500, 'err');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Send via Hostinger →';
+    }
+    return;
+  }
 
   if (emailContext.channel === 'gmail') {
     if (!cfg.gClientId) { toast('Connect Google in Settings to send via Gmail', 3000, 'err'); return; }
@@ -2994,7 +3243,7 @@ function renderEmails() {
       <td><span style="font-size:12.5px">${esc(e.to)}</span></td>
       <td><span style="font-size:12px;color:var(--text-secondary)">${esc(linkedName)}</span></td>
       <td><span class="badge badge-cold">${esc(templateLabel(e.template))}</span></td>
-      <td><span style="font-size:11.5px;color:var(--text-muted)">${e.channel === 'gmail' ? '⚡ Gmail' : '📧 Mail App'}</span></td>
+      <td><span style="font-size:11.5px;color:var(--text-muted)">${e.channel === 'gmail' ? '⚡ Gmail' : e.channel === 'hostinger' ? '📨 Hostinger' : '📧 Mail App'}</span></td>
       <td style="font-size:11px;color:var(--text-muted)">${timeAgo(e.sentAt)}</td>
       <td>
         ${e.status === 'replied'
@@ -3027,7 +3276,7 @@ function openEmailDetail(id) {
   const e = emails.find(x => x.id === id); if (!e) return;
   const lead = e.leadId ? leads.find(l => l.id === e.leadId) : null;
   const appt = e.apptId ? appts.find(a => a.id === e.apptId) : null;
-  document.getElementById('edSub').textContent = `Sent ${timeAgo(e.sentAt)} · ${e.channel === 'gmail' ? 'via Gmail' : 'via Mail App'}`;
+  document.getElementById('edSub').textContent = `Sent ${timeAgo(e.sentAt)} · ${e.channel === 'gmail' ? 'via Gmail' : e.channel === 'hostinger' ? 'via Hostinger' : 'via Mail App'}`;
   document.getElementById('edBody').innerHTML = `
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
       ${statusBadge(e)}
@@ -4282,7 +4531,7 @@ async function saveAppt() {
     persistAppts();
     if (sendConf && data.email) {
       // Open the email composer pre-filled with confirmation template
-      emailContext = { appt, channel:gToken?'gmail':'mailto', template:'confirmation' };
+      emailContext = { appt, channel:pickDefaultEmailChannel(), template:'confirmation' };
       document.getElementById('emTemplate').value = 'confirmation';
       closeApptModal();
       loadEmailTemplate();
@@ -4312,7 +4561,7 @@ function deleteAppt() {
 }
 function openEmailFromAppt(apptId, template) {
   const a = appts.find(x => x.id === apptId); if (!a) return;
-  emailContext = { appt:a, channel:gToken?'gmail':'mailto', template };
+  emailContext = { appt:a, channel:pickDefaultEmailChannel(), template };
   document.getElementById('emTemplate').value = template;
   loadEmailTemplate();
   setEmailChannel(emailContext.channel);
